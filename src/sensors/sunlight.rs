@@ -1,65 +1,40 @@
+use embedded_hal::i2c::I2c;
+use linux_embedded_hal::I2cdev;
 
-use linux_embedded_hal as hal;
-use hal::{Delay, I2cdev};
-use embedded_hal::delay::DelayNs;
-use si1145::Si1145;
+const SI115X_ADDRESS: u8 = 0x53;
+const PART_ID_REGISTER: u8 = 0x00;
 
 pub fn show_sunlight() {
     println!("Connecting to sunlight sensor...");
 
-    let dev = match I2cdev::new("/dev/i2c-1") {
-        Ok(dev) => dev,
+    let mut i2c = match I2cdev::new("/dev/i2c-1") {
+        Ok(device) => device,
         Err(error) => {
-            println!("Could not connect: {error}");
+            println!("Could not connect to I2C: {error}");
             return;
         }
     };
 
-    let mut delay = Delay;
+    let mut part_id = [0u8; 1];
 
-    let mut si1145 = match Si1145::new(dev, &mut delay) {
-        Ok(sensor) => sensor,
+    match i2c.write_read(
+        SI115X_ADDRESS,
+        &[PART_ID_REGISTER],
+        &mut part_id,
+    ) {
+        Ok(()) => {
+            println!("Sensor responded!");
+            println!("Part ID: 0x{:02X}", part_id[0]);
+
+            match part_id[0] {
+                0x51 => println!("Detected SI1151."),
+                0x52 => println!("Detected SI1152."),
+                0x53 => println!("Detected SI1153."),
+                other => println!("Unrecognised part ID: 0x{other:02X}"),
+            }
+        }
         Err(error) => {
-            println!("Could not start sensor: {error:?}");
-            return;
+            println!("Could not read sensor ID: {error}");
         }
-    };
-
-    println!("Reading sunlight...");
-
-    loop {
-        match si1145.measurement_ready() {
-            Ok(true) => {
-                let lux = match si1145.measure_lux() {
-                    Ok(value) => value,
-                    Err(error) => {
-                        println!("Could not read light: {error:?}");
-                        return;
-                    }
-                };
-
-                let uv_index = match si1145.measure_uv_index() {
-                    Ok(value) => value,
-                    Err(error) => {
-                        println!("Could not read UV: {error:?}");
-                        return;
-                    }
-                };
-
-                println!("Ambient light: {lux} lux");
-                println!("UV Index: {uv_index:.2}");
-            }
-
-            Ok(false) => {
-                println!("Waiting for a reading...");
-            }
-
-            Err(error) => {
-                println!("Could not get a reading: {error:?}");
-                return;
-            }
-        }
-
-        delay.delay_ms(1000_u32);
     }
 }
