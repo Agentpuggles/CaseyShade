@@ -4,7 +4,10 @@ use std::thread::sleep;
 use std::time::Duration;
 
 mod sensors;
-
+mod app;
+mod data;
+mod display;
+mod official_uv;
 fn clear_screen() {
     print!("\x1B[2J\x1B[H");
     io::stdout().flush().unwrap();
@@ -38,7 +41,8 @@ fn main() {
     println!("Detected OS: {operating_system_name}");
 
     // Check whether the operating system name contains "Linux".
-    if !operating_system_name.contains("Linux") {
+    // Check whether CaseyShade was compiled for Linux.
+    if !cfg!(target_os = "linux") {
         println!("Sorry, CaseyShade currently supports Linux only.");
         return;
     }
