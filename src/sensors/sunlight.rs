@@ -7,26 +7,26 @@ use std::time::Duration;
 const ADDRESS: u8 = 0x53; // Si1151 default I2C address
 
 // Registers
-const PART_ID:    u8 = 0x00;
-const HOSTIN_0:   u8 = 0x0A;
-const COMMAND:    u8 = 0x0B;
+const PART_ID: u8 = 0x00;
+const HOSTIN_0: u8 = 0x0A;
+const COMMAND: u8 = 0x0B;
 const RESPONSE_0: u8 = 0x11;
-const HOSTOUT_2:  u8 = 0x15; // visible channel, high byte
-const HOSTOUT_3:  u8 = 0x16; // visible channel, low byte
+const HOSTOUT_2: u8 = 0x15; // visible channel, high byte
+const HOSTOUT_3: u8 = 0x16; // visible channel, low byte
 
 // Command codes
-const RESET_SW:  u8 = 0x01;
-const FORCE:     u8 = 0x11;
+const RESET_SW: u8 = 0x01;
+const FORCE: u8 = 0x11;
 const PARAM_SET: u8 = 0x80;
 
 // Parameter addresses (used to configure each measurement channel)
-const ADCCONFIG_0:  u8 = 0x02;
-const ADCSENS_0:    u8 = 0x03;
-const ADCPOST_0:    u8 = 0x04;
+const ADCCONFIG_0: u8 = 0x02;
+const ADCSENS_0: u8 = 0x03;
+const ADCPOST_0: u8 = 0x04;
 const MEASCONFIG_0: u8 = 0x05;
-const ADCCONFIG_1:  u8 = 0x06;
-const ADCSENS_1:    u8 = 0x07;
-const ADCPOST_1:    u8 = 0x08;
+const ADCCONFIG_1: u8 = 0x06;
+const ADCSENS_1: u8 = 0x07;
+const ADCPOST_1: u8 = 0x08;
 const MEASCONFIG_1: u8 = 0x09;
 
 // ---------- low level helpers ----------
@@ -34,7 +34,8 @@ const MEASCONFIG_1: u8 = 0x09;
 /// Read one byte from a register.
 fn read_byte(i2c: &mut I2cdev, reg: u8) -> u8 {
     let mut buf = [0u8; 1];
-    i2c.write_read(ADDRESS, &[reg], &mut buf).expect("I2C read failed");
+    i2c.write_read(ADDRESS, &[reg], &mut buf)
+        .expect("I2C read failed");
     buf[0]
 }
 
@@ -58,8 +59,8 @@ fn wait_for_ack(i2c: &mut I2cdev, previous_response: u8) {
 /// Tell the sensor to store `value` in parameter `location`.
 fn param_set(i2c: &mut I2cdev, location: u8, value: u8) {
     let before = read_byte(i2c, RESPONSE_0);
-    write_byte(i2c, HOSTIN_0, value);                 // put the value in the mailbox
-    write_byte(i2c, COMMAND, location | PARAM_SET);   // then ask the chip to take it
+    write_byte(i2c, HOSTIN_0, value); // put the value in the mailbox
+    write_byte(i2c, COMMAND, location | PARAM_SET); // then ask the chip to take it
     wait_for_ack(i2c, before);
 }
 
@@ -108,15 +109,15 @@ pub fn show_sunlight() {
     }
 
     // 3. Configure channel 0 (IR) — not read here, but matches the C++ library
-    param_set(&mut i2c, ADCCONFIG_0,  0b0000_0000); // small IR photodiode
-    param_set(&mut i2c, ADCSENS_0,    0b1000_0000); // high signal range
-    param_set(&mut i2c, ADCPOST_0,    0b0000_0000);
+    param_set(&mut i2c, ADCCONFIG_0, 0b0000_0000); // small IR photodiode
+    param_set(&mut i2c, ADCSENS_0, 0b1000_0000); // high signal range
+    param_set(&mut i2c, ADCPOST_0, 0b0000_0000);
     param_set(&mut i2c, MEASCONFIG_0, 0b0000_0000);
 
     // 4. Configure channel 1 (Visible)
-    param_set(&mut i2c, ADCCONFIG_1,  0b0000_1011); // visible photodiode
-    param_set(&mut i2c, ADCSENS_1,    0b1000_0000); // high signal range
-    param_set(&mut i2c, ADCPOST_1,    0b0000_0000);
+    param_set(&mut i2c, ADCCONFIG_1, 0b0000_1011); // visible photodiode
+    param_set(&mut i2c, ADCSENS_1, 0b1000_0000); // high signal range
+    param_set(&mut i2c, ADCPOST_1, 0b0000_0000);
     param_set(&mut i2c, MEASCONFIG_1, 0b0000_0000);
 
     // 5. Take a reading

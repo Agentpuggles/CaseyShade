@@ -1,12 +1,11 @@
-
 use std::io::{self, Write};
 use std::thread::sleep;
 use std::time::Duration;
 
-mod sensors;
 mod app;
 mod data;
 mod display;
+mod sensors;
 
 fn clear_screen() {
     print!("\x1B[2J\x1B[H");
@@ -72,7 +71,6 @@ fn main() {
             break;
         }
 
-
         match choice.trim() {
             "1" => {
                 clear_screen();
@@ -107,6 +105,5 @@ fn main() {
                 sleep(Duration::from_secs(1));
             }
         }
-
     }
 }
