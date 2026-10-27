@@ -7,8 +7,6 @@ mod sensors;
 mod app;
 mod data;
 mod display;
-mod official_uv;
-mod uv;
 
 fn clear_screen() {
     print!("\x1B[2J\x1B[H");
@@ -98,7 +96,7 @@ fn main() {
             }
             "3" => {
                 clear_screen();
-                sensors::uv;
+                sensors::uv::island();
             }
             "4" => {
                 println!("Goodbye!");

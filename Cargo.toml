@@ -6,6 +6,10 @@ edition = "2024"
 [dependencies]
 bme280 = { version = "0.5.1", default-features = false, features = ["sync"] }
 embedded-hal = "1.0.0"
-linux-embedded-hal = "0.5.0"
+# Change this line:
+linux-embedded-hal = { version = "0.5.0", default-features = false, features = ["i2c"] }
 os_info = "3.15.0"
 si1145 = "0.1.0"
+
+[dev-dependencies]
+embedded-hal-mock = { version = "0.10", features = ["eh1"] }
