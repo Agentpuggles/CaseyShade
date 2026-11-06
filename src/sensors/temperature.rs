@@ -8,7 +8,7 @@ pub fn show_temperature() {
     let i2c = match I2cdev::new("/dev/i2c-1") {
         Ok(i2c) => i2c,
         Err(error) => {
-            println!("Could not connect to the sensor: {error}");
+            println!("Could not connect to the sensor: {error:?}");
             return;
         }
     };
