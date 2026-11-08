@@ -14,7 +14,6 @@ dependencies = [
  "embedded-hal-mock",
  "linux-embedded-hal",
  "os_info",
- "si1145",
 ]
 
 [[package]]
@@ -3230,16 +3229,6 @@ name = "shlex"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
-
-[[package]]
-name = "si1145"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e646040e05d4c01146159ccec7fff3bd861802f5e2dbc80d3d30025d8d14b851"
-dependencies = [
- "embedded-hal 1.0.0",
- "num_enum",
-]
 
 [[package]]
 name = "signal-hook-registry"
