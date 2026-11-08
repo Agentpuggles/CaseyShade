@@ -7,6 +7,8 @@ mod data;
 mod display;
 mod sensors;
 
+pub mod graph;
+
 fn clear_screen() {
     print!("\x1B[2J\x1B[H");
     io::stdout().flush().unwrap();
@@ -59,7 +61,8 @@ fn main() {
         println!("1. Read temperature");
         println!("2. Read sunlight");
         println!("3. Read UV");
-        println!("4. Exit");
+        println!("4. Data Graphs");
+        println!("5. Exit");
 
         print!("Choose an option: ");
         io::stdout().flush().unwrap();
@@ -97,6 +100,9 @@ fn main() {
                 sensors::uv::island();
             }
             "4" => {
+                graph::open_graph();
+            }
+            "5" => {
                 println!("Goodbye!");
                 break;
             }

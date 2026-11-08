@@ -11,5 +11,7 @@ linux-embedded-hal = { version = "0.5.0", default-features = false, features = [
 os_info = "3.15.0"
 si1145 = "0.1.0"
 chrono = "0.4"
+eframe = "0.37.0"
+egui_plot = "0.38.0"
 [dev-dependencies]
 embedded-hal-mock = { version = "0.10", features = ["eh1"] }
