@@ -8,6 +8,7 @@ mod display;
 mod sensors;
 
 pub mod graph;
+pub mod analysis;
 
 fn clear_screen() {
     print!("\x1B[2J\x1B[H");
