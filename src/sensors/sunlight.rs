@@ -19,6 +19,9 @@ const RESET_SW: u8 = 0x01; // Reboot the chip
 const FORCE: u8 = 0x11; // Take a measurement right now
 const PARAM_SET: u8 = 0x80; // Adding parameters to an address
 
+// Global parameter table: which channels a FORCE command measures
+const CHAN_LIST: u8 = 0x01;
+
 // Channel 0: infrared photodiode
 const ADCCONFIG_0: u8 = 0x02;
 const ADCSENS_0: u8 = 0x03; // Sensitivity
@@ -34,6 +37,19 @@ const MEASCONFIG_1: u8 = 0x09;
 /// How many times the driver waits for the sensor before giving up. Each wait
 /// is 200 microseconds, so a command gets about 50 milliseconds in total.
 const ACK_ATTEMPTS: u32 = 250;
+
+/// What RESPONSE_0 reads once the chip has finished starting up: sleeping, no
+/// command error, and a command counter of 0x0F.
+const RESPONSE_READY: u8 = 0x2F;
+
+/// The Si115x does not answer on I2C while it restarts after RESET_SW. The
+/// datasheet asks the host to wait for the start-up time before talking to the
+/// chip again, which is well under a millisecond; this leaves a wide margin.
+const STARTUP_DELAY: Duration = Duration::from_millis(25);
+
+/// How many 1 ms attempts the reset check makes before giving up. A read that
+/// is not acknowledged means "still starting up", not "sensor missing".
+const RESET_ATTEMPTS: u32 = 500;
 
 /// I2C reads in two steps: write the register number ("I want register x"),
 /// then read the reply. `write_read` does both in one transaction.
@@ -122,17 +138,33 @@ impl SunlightSensor {
 
         write_byte(&mut i2c, COMMAND, RESET_SW)?;
 
-        // Wait for the reset to finish, but give up if the chip never answers.
+        // The chip stops acknowledging its I2C address while it restarts, which
+        // the kernel reports as EREMOTEIO (errno 121). Wait out the start-up
+        // delay first, then treat an unacknowledged read as "not ready yet" so
+        // only the timeout counts as a failure.
+        thread::sleep(STARTUP_DELAY);
+
         let mut attempts = 0;
+        let mut ready = false;
 
-        while read_byte(&mut i2c, RESPONSE_0)? != 0x2F {
-            thread::sleep(Duration::from_millis(1));
-            attempts += 1;
-
-            if attempts > 100 {
+        while !ready {
+            if attempts >= RESET_ATTEMPTS {
                 return Err("the Si1151 did not finish resetting".to_string());
             }
+
+            attempts += 1;
+
+            if read_byte(&mut i2c, RESPONSE_0).is_ok_and(|response| response == RESPONSE_READY) {
+                ready = true;
+            } else {
+                thread::sleep(Duration::from_millis(1));
+            }
         }
+
+        // Tell the sensor which channels to measure: 0 is the infrared
+        // photodiode and 1 is the visible-light photodiode. Without CHAN_LIST a
+        // FORCE command has nothing to measure and the output registers stay 0.
+        param_set(&mut i2c, CHAN_LIST, 0b0000_0011)?;
 
         // Channel 0: infrared photodiode.
         param_set(&mut i2c, ADCCONFIG_0, 0b0000_0000)?;
@@ -163,6 +195,15 @@ pub fn show_sunlight() {
         Ok(sensor) => sensor,
         Err(error) => {
             println!("Could not use the sunlight sensor: {error}");
+
+            // errno 121 is the kernel's way of saying that nothing answered at
+            // the sensor's I2C address.
+            if error.contains("Errno(121)") {
+                println!();
+                println!("Nothing answered at address 0x{ADDRESS:02X} on /dev/i2c-1.");
+                println!("Check the wiring, then confirm the sensor is there with: i2cdetect -y 1");
+            }
+
             return;
         }
     };
